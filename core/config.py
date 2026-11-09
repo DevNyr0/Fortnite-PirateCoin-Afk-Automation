@@ -20,19 +20,10 @@ def get_assets_dir():
     return os.path.join(get_base_dir(), "assets")
 
 def get_templates_dir():
-    p = os.path.join(get_assets_dir(), "templates")
-    if os.path.exists(p):
-        return p
-    return os.path.join(get_base_dir(), "images")
+    return os.path.join(get_assets_dir(), "templates")
 
 def get_icons_dir():
-    p = os.path.join(get_assets_dir(), "icons")
-    if os.path.exists(p):
-        return p
-    return get_base_dir()
-
-def get_images_dir():
-    return get_templates_dir()
+    return os.path.join(get_assets_dir(), "icons")
 
 def is_safe_click_area(x, y, fw, fh):
     rx = x / float(fw)
@@ -40,4 +31,3 @@ def is_safe_click_area(x, y, fw, fh):
     if rx >= 0.45 and ry >= 0.88:
         return False
     return True
-

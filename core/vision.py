@@ -2,7 +2,7 @@ import os
 import cv2
 import mss
 import numpy as np
-from core.config import get_templates_dir, get_images_dir
+from core.config import get_templates_dir
 
 def load_cv_image(path):
     if not os.path.exists(path):
@@ -80,7 +80,7 @@ def match_template(frame, template, threshold=0.78, roi=None, fw=None):
     return None, float(max(0.0, best_score))
 
 def load_all_templates():
-    search_dirs = [get_templates_dir(), get_images_dir()]
+    td = get_templates_dir()
     candidates = {
         "play_again": ["play_again.png", "play_again_text.png", "recap_play_again.png", "custom_button.png"],
         "lobby_play": ["play_btn_en.png", "play_btn.png", "ready.png", "custom_button.png"],
@@ -96,18 +96,10 @@ def load_all_templates():
     for group, names in candidates.items():
         loaded[group] = []
         for name in names:
-            found_img = None
-            for d in search_dirs:
-                if not d or not os.path.exists(d):
-                    continue
-                p = os.path.join(d, name)
-                img = load_cv_image(p)
-                if img is not None:
-                    found_img = img
-                    break
-            if found_img is not None:
-                if found_img.ndim == 3:
-                    found_img = cv2.cvtColor(found_img, cv2.COLOR_BGR2GRAY)
-                loaded[group].append((name, found_img))
+            p = os.path.join(td, name)
+            img = load_cv_image(p)
+            if img is not None:
+                if img.ndim == 3:
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                loaded[group].append((name, img))
     return loaded
-

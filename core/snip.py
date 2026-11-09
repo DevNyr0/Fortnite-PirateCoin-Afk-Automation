@@ -1,7 +1,7 @@
 import os
 import cv2
 import tkinter as tk
-from core.config import get_templates_dir, get_images_dir
+from core.config import get_templates_dir
 from core.vision import capture_screen
 
 class SnipTool:
@@ -64,18 +64,11 @@ class SnipTool:
         if max_x - min_x > 15 and max_y - min_y > 15:
             cropped = self.screenshot[min_y:max_y, min_x:max_x]
             _, buf = cv2.imencode(".png", cropped)
-            save_dirs = [get_templates_dir(), get_images_dir()]
-            target_path = None
-            for d in save_dirs:
-                if d and os.path.exists(d):
-                    sp = os.path.join(d, "custom_button.png")
-                    with open(sp, "wb") as f:
-                        f.write(buf)
-                    if target_path is None:
-                        target_path = sp
+            sp = os.path.join(get_templates_dir(), "custom_button.png")
+            with open(sp, "wb") as f:
+                f.write(buf)
             if self.on_complete:
-                self.on_complete(True, target_path or "custom_button.png")
+                self.on_complete(True, sp)
         else:
             if self.on_complete:
                 self.on_complete(False, "Selection too small")
-
