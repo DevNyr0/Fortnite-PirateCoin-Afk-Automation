@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nyr0 Pirate Coin Automation</title>
+  <link rel="icon" type="image/x-icon" href="icon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rajdhani:wght@600;700;800&family=Cinzel:wght@800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="text/javascript" src="/eel.js"></script>
+</head>
+<body>
+  <div class="window-shell">
+    <div class="background-ambient">
+      <div class="ambient-glow gold-ambient"></div>
+      <div class="ambient-glow cyan-ambient"></div>
+      <div class="ambient-mesh"></div>
+    </div>
+
+    <header class="pirate-header">
+      <div class="header-left">
+        <div class="coin-emblem-wrap">
+          <div class="coin-shimmer-ring"></div>
+          <img src="logo.png" alt="Pirate Logo" class="coin-logo">
+        </div>
+        <div class="title-meta">
+          <div class="title-row">
+            <h1 class="game-title">NYR0 PIRATE COIN AUTOMATION</h1>
+            <span class="pro-tag">PRO</span>
+          </div>
+          <div class="tag-row">
+            <span class="fortnite-pill gold-pill">
+              <svg viewBox="0 0 24 24" class="pill-svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M12 7v10M9 10h6M9 14h4.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+              PIRATE PASS
+            </span>
+            <span class="fortnite-pill cyan-pill">
+              <svg viewBox="0 0 24 24" class="pill-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor"/></svg>
+              INFINITE LOOP
+            </span>
+            <span class="fortnite-pill dark-pill">
+              <svg viewBox="0 0 24 24" class="pill-svg"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+              ANTI-AFK V2
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-hud-card" id="statusPill">
+          <div class="beacon-wrap">
+            <span class="pulse-beacon" id="pulseBeacon"></span>
+            <span class="status-hud-dot" id="statusDot"></span>
+          </div>
+          <div class="status-hud-info">
+            <span class="status-hud-sub">ENGINE STATE</span>
+            <span class="status-hud-label" id="statusLabel">IDLE</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard-scroll">
+      <section class="treasure-stats-grid">
+        <div class="fn-card stat-gold">
+          <div class="card-gold-trim"></div>
+          <div class="card-icon-bubble bubble-gold">
+            <svg viewBox="0 0 24 24" class="hud-svg"><path d="M21 7H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" stroke="currentColor" stroke-width="2" fill="none"/><path d="M1 12h22" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M4 7V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+          </div>
+          <div class="card-metric-block">
+            <span class="metric-title">SHOP ACCESS FOUND</span>
+            <span class="metric-number text-gold" id="statAccess">0</span>
+            <span class="metric-sub">
+              <svg viewBox="0 0 24 24" class="sub-svg"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2"/></svg>
+              Pirate Drops Detected
+            </span>
+          </div>
+        </div>
+
+        <div class="fn-card stat-cyan">
+          <div class="card-gold-trim"></div>
+          <div class="card-icon-bubble bubble-cyan">
+            <svg viewBox="0 0 24 24" class="hud-svg"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l2 2h3v-3l-2-2M19 5l-2-2m-4 13l2-2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="18" cy="6" r="3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+          </div>
+          <div class="card-metric-block">
+            <span class="metric-title">MATCHES QUEUED</span>
+            <span class="metric-number text-cyan" id="statMatches">0</span>
+            <span class="metric-sub">
+              <svg viewBox="0 0 24 24" class="sub-svg"><path d="M21.5 2v6h-6M21.34 15.57a9 9 0 1 1-.57-8.38l5.67-5.19" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+              Auto Closed Loop
+            </span>
+          </div>
+        </div>
+
+        <div class="fn-card stat-purple">
+          <div class="card-gold-trim"></div>
+          <div class="card-icon-bubble bubble-purple">
+            <svg viewBox="0 0 24 24" class="hud-svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" stroke-width="2"/><path d="M12 12l3.5-3.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+          </div>
+          <div class="card-metric-block">
+            <span class="metric-title">SESSION VOYAGE</span>
+            <span class="metric-number text-purple" id="statUptime">00:00:00</span>
+            <span class="metric-sub">
+              <svg viewBox="0 0 24 24" class="sub-svg"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/><polyline points="12 8 12 12 14.5 14" stroke="currentColor" stroke-width="2"/></svg>
+              Total Active Time
+            </span>
+          </div>
+        </div>
+
+        <div class="fn-card stat-green">
+          <div class="card-gold-trim"></div>
+          <div class="card-icon-bubble bubble-green">
+            <svg viewBox="0 0 24 24" class="hud-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" stroke="currentColor" stroke-width="2" fill="currentColor" fill-opacity="0.2"/></svg>
+          </div>
+          <div class="card-metric-block">
+            <span class="metric-title">IN-MATCH TIMER</span>
+            <span class="metric-number text-green" id="statMatchDur">00:00</span>
+            <span class="metric-sub">
+              <svg viewBox="0 0 24 24" class="sub-svg"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2" stroke="currentColor" stroke-width="2"/></svg>
+              Elimination Watch
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-command-panel">
+        <button id="toggleBtn" class="fortnite-play-btn btn-play-ready">
+          <span class="fn-btn-shimmer"></span>
+          <span class="fn-btn-icon-wrap" id="btnIconWrap">
+            <svg viewBox="0 0 24 24" class="cta-play-svg"><polygon points="6 3 20 12 6 21 6 3" fill="currentColor"/></svg>
+          </span>
+          <div class="fn-btn-label-group">
+            <span class="fn-btn-text" id="btnText">START AUTOMATION</span>
+            <span class="fn-btn-sub">READY UP &amp; AUTO-CYCLE LOOP</span>
+          </div>
+          <span class="fn-hotkey-badge">KEY: [F8]</span>
+        </button>
+
+        <div class="fn-utility-row">
+          <button id="snipBtn" class="fn-util-btn" title="Snip custom button from screen">
+            <svg viewBox="0 0 24 24" class="fn-util-svg"><path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
+            <span>SNIP BUTTON</span>
+          </button>
+          <button id="testBtn" class="fn-util-btn" title="Test matching on screen right now">
+            <svg viewBox="0 0 24 24" class="fn-util-svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2.5" fill="none"/><line x1="21" y1="21" x2="16" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            <span>TEST SCREEN</span>
+          </button>
+          <button id="resetBtn" class="fn-util-btn" title="Reset stats counters">
+            <svg viewBox="0 0 24 24" class="fn-util-svg"><path d="M21.5 2v6h-6M21.34 15.57a9 9 0 1 1-.57-8.38l5.67-5.19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+            <span>RESET STATS</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="split-cockpit">
+        <section class="cockpit-card config-deck">
+          <div class="deck-header">
+            <div class="deck-title-wrap">
+              <span class="deck-svg-icon">
+                <svg viewBox="0 0 24 24" class="deck-header-svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+              </span>
+              <h2>CAPTAIN'S CONFIGURATION</h2>
+            </div>
+            <span class="deck-pill">AUTO-SAVED</span>
+          </div>
+
+          <div class="deck-form">
+            <div class="deck-control">
+              <div class="deck-label-row">
+                <span class="control-name">SCAN INTERVAL</span>
+                <span class="control-value-badge" id="valInterval">1.5s</span>
+              </div>
+              <input type="range" id="inputInterval" min="0.5" max="5.0" step="0.25" value="1.5" class="fn-slider">
+            </div>
+
+            <div class="deck-control">
+              <div class="deck-label-row">
+                <span class="control-name">DETECTION CONFIDENCE</span>
+                <span class="control-value-badge badge-gold" id="valConf">78%</span>
+              </div>
+              <input type="range" id="inputConf" min="50" max="95" step="1" value="78" class="fn-slider">
+            </div>
+
+            <div class="toggle-deck-row">
+              <div class="toggle-feature">
+                <label class="fn-switch">
+                  <input type="checkbox" id="checkAfk" checked>
+                  <span class="fn-switch-slider"></span>
+                </label>
+                <div class="toggle-texts">
+                  <span class="toggle-main-text">Anti-AFK Movement</span>
+                  <span class="toggle-sub-text">Random WASD taps during match</span>
+                </div>
+              </div>
+
+              <div class="toggle-feature feature-highlight">
+                <label class="fn-switch">
+                  <input type="checkbox" id="checkWSpace">
+                  <span class="fn-switch-slider"></span>
+                </label>
+                <div class="toggle-texts">
+                  <div class="toggle-headline">
+                    <span class="toggle-main-text">W + Space Jump-Walk</span>
+                    <span class="mini-tag">EVERY 3S</span>
+                  </div>
+                  <span class="toggle-sub-text">Auto forward jump every 3 seconds</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="deck-footer">
+            <button id="saveSettingsBtn" class="fn-apply-btn">
+              <svg viewBox="0 0 24 24" class="btn-check-svg"><polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
+              <span>SAVE CONFIGURATION</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="cockpit-card log-deck">
+          <div class="deck-header">
+            <div class="deck-title-wrap">
+              <span class="deck-svg-icon">
+                <svg viewBox="0 0 24 24" class="deck-header-svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" fill="none"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" fill="none"/><line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/><line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/><polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2"/></svg>
+              </span>
+              <h2>PIRATE LOG CONSOLE</h2>
+            </div>
+            <button id="clearLogBtn" class="fn-clear-btn">
+              <svg viewBox="0 0 24 24" class="clear-svg"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+              <span>CLEAR</span>
+            </button>
+          </div>
+          <div class="log-screen" id="logContainer"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

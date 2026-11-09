@@ -1,0 +1,11 @@
+opencv-python
+mss
+numpy
+pydirectinput
+pyautogui
+keyboard
+Pillow
+eel
+pywin32
+pyinstaller
+
