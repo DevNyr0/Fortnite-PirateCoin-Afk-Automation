@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import socket
 import random
 import threading
 import cv2
@@ -403,15 +404,39 @@ def setup_hotkeys():
     except Exception:
         pass
 
+def get_free_port():
+    for p in (28540, 28541, 28542, 28543):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(("127.0.0.1", p))
+            s.close()
+            return p
+        except Exception:
+            pass
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("127.0.0.1", 0))
+    p = s.getsockname()[1]
+    s.close()
+    return p
+
 def find_browser():
-    edge = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-    chrome = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-    if os.path.exists(edge):
-        eel.browsers.set_path("edge", edge)
-        return "edge"
-    if os.path.exists(chrome):
-        eel.browsers.set_path("chrome", chrome)
-        return "chrome"
+    edge_paths = [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+    ]
+    chrome_paths = [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe")
+    ]
+    for p in edge_paths:
+        if os.path.exists(p):
+            eel.browsers.set_path("edge", p)
+            return "edge"
+    for p in chrome_paths:
+        if os.path.exists(p):
+            eel.browsers.set_path("chrome", p)
+            return "chrome"
     return "default"
 
 if __name__ == "__main__":
@@ -419,20 +444,22 @@ if __name__ == "__main__":
     web_dir = os.path.join(get_base_dir(), "web")
     eel.init(web_dir)
     browser = find_browser()
+    port = get_free_port()
     try:
         eel.start(
             "index.html",
             mode=browser,
-            size=(980, 720),
-            port=0,
-            cmdline_args=["--disable-http-cache", "--app=http://localhost"]
+            host="127.0.0.1",
+            port=port,
+            size=(980, 720)
         )
     except (SystemExit, MemoryError, KeyboardInterrupt):
         state.stop_event.set()
         sys.exit(0)
     except Exception:
         try:
-            eel.start("index.html", mode="default", size=(980, 720), port=0)
+            port = get_free_port()
+            eel.start("index.html", mode="default", host="127.0.0.1", port=port, size=(980, 720))
         except Exception:
             state.stop_event.set()
             sys.exit(0)
