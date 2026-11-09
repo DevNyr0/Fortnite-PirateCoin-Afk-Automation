@@ -8,108 +8,25 @@ import cv2
 import keyboard
 import eel
 import eel.browsers
-from engine import (
+
+from core import (
+    HOTKEY,
+    W_SPACE_INTERVAL,
+    SHOP_ACCESS_COOLDOWN,
     get_base_dir,
-    get_images_dir,
-    load_cv_image,
+    is_safe_click_area,
     capture_screen,
     match_template,
+    load_all_templates,
     safe_click,
     press_key,
     press_w_space,
     ensure_fortnite_foreground,
-    SnipTool
+    SnipTool,
+    state,
+    add_log,
+    broadcast_state
 )
-
-class MacroState:
-    def __init__(self):
-        self.running = False
-        self.status = "IDLE"
-        self.matches = 0
-        self.access_found = 0
-        self.start_time = None
-        self.match_start_time = None
-        self.logs = []
-        self.check_interval = 1.5
-        self.confidence = 0.78
-        self.anti_afk = True
-        self.afk_interval = 25.0
-        self.w_space = False
-        self.last_w_space_time = 0.0
-        self.last_access_time = 0.0
-        self.stop_event = threading.Event()
-        self.worker_thread = None
-        self.w_space_thread = None
-        self.last_afk_time = 0.0
-
-state = MacroState()
-
-def add_log(msg, level="info"):
-    timestamp = time.strftime("%H:%M:%S")
-    entry = {"time": timestamp, "text": msg, "level": level}
-    state.logs.append(entry)
-    if len(state.logs) > 300:
-        state.logs.pop(0)
-    try:
-        eel.js_add_log(entry)()
-    except Exception:
-        pass
-
-def broadcast_state():
-    uptime = 0
-    if state.running and state.start_time:
-        uptime = int(time.time() - state.start_time)
-    match_dur = 0
-    if state.running and state.match_start_time:
-        match_dur = int(time.time() - state.match_start_time)
-    data = {
-        "running": state.running,
-        "status": state.status,
-        "matches": state.matches,
-        "access_found": state.access_found,
-        "uptime": uptime,
-        "match_duration": match_dur,
-        "check_interval": state.check_interval,
-        "confidence": state.confidence,
-        "anti_afk": state.anti_afk,
-        "w_space": state.w_space
-    }
-    try:
-        eel.js_update_state(data)()
-    except Exception:
-        pass
-
-def load_all_templates():
-    img_dir = get_images_dir()
-    candidates = {
-        "play_again": ["play_again.png", "play_again_text.png", "recap_play_again.png", "custom_button.png"],
-        "lobby_play": ["play_btn_en.png", "play_btn.png", "ready.png", "custom_button.png"],
-        "shop_access": ["shop_access_text.png", "shop_access_coin.png", "shop_access_full.png", "shop_access_you_found.png"],
-        "return_lobby": ["return_lobby_exact.png", "return_lobby_btn_en.png"],
-        "continue": ["continue_btn.png"],
-        "skip": ["skip_btn.png"],
-        "back": ["back_btn.png"],
-        "nvidia": ["nvidia.png"],
-        "failsafe": ["failsafe.png"]
-    }
-    loaded = {}
-    for group, names in candidates.items():
-        loaded[group] = []
-        for name in names:
-            p = os.path.join(img_dir, name)
-            img = load_cv_image(p)
-            if img is not None:
-                if img.ndim == 3:
-                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                loaded[group].append((name, img))
-    return loaded
-
-def is_safe_click_area(x, y, fw, fh):
-    rx = x / float(fw)
-    ry = y / float(fh)
-    if rx >= 0.45 and ry >= 0.88:
-        return False
-    return True
 
 def w_space_worker():
     while not state.stop_event.is_set():
@@ -117,7 +34,7 @@ def w_space_worker():
             press_w_space()
             if random.random() < 0.35:
                 add_log("Action: Jump-Walk (W + Space) active", "action")
-        state.stop_event.wait(3.0)
+        state.stop_event.wait(W_SPACE_INTERVAL)
 
 def worker_loop():
     templates = load_all_templates()
@@ -144,7 +61,7 @@ def worker_loop():
 
             gf = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame
 
-            if now - state.last_access_time >= 12.0:
+            if now - state.last_access_time >= SHOP_ACCESS_COOLDOWN:
                 roi_shop = (0, int(fh * 0.70), int(fw * 0.15), int(fw * 0.85))
                 for name, tpl in templates.get("shop_access", []):
                     pos, score = match_template(gf, tpl, threshold=min(state.confidence, 0.68), roi=roi_shop, fw=fw)
@@ -400,7 +317,7 @@ def setup_hotkeys():
     def on_hotkey():
         toggle_macro()
     try:
-        keyboard.add_hotkey("f8", on_hotkey)
+        keyboard.add_hotkey(HOTKEY, on_hotkey)
     except Exception:
         pass
 

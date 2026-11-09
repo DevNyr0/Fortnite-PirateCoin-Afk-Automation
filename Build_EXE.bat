@@ -3,7 +3,7 @@ title Nyr0 Pirate Coin Automation - Build Standalone EXE
 cd /d "%~dp0"
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-python -m PyInstaller --noconfirm --clean --noconsole --onefile --icon "icon.ico" --add-data "web;web" --add-data "images;images" --add-data "icon.ico;." --add-data "logo.png;." --name "Nyr0 Pirate Coin Automation" main.py
+python -m PyInstaller --noconfirm --clean --noconsole --onefile --icon "assets/icons/icon.ico" --add-data "web;web" --add-data "assets;assets" --add-data "images;images" --add-data "core;core" --add-data "assets/icons/icon.ico;." --add-data "assets/icons/logo.png;." --name "Nyr0 Pirate Coin Automation" main.py
 if errorlevel 1 (
     echo.
     echo Build failed. Check errors above.
@@ -18,4 +18,3 @@ echo ======================================================
 echo Build complete: "Nyr0 Pirate Coin Automation.exe"
 echo ======================================================
 pause
-

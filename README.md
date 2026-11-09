@@ -1,6 +1,30 @@
 # Nyr0 Pirate Coin Automation
 
-Fortnite Pirate Pass ve ada maçları için geliştirilmiş otomatik maç döngüsü ve Pirate Shop Access takip programı. Maç bittiğinde veya elenildiğinde otomatik olarak **Play Again** (veya lobiye düşerse **Play**) butonuna tıklar, AFK kalmamak için karakteri hareket ettirir ve bulunan Pirate Shop Access sayısını canlı olarak ekranda gösterir.
+Fortnite Pirate Pass ve ada maçları için geliştirilmiş modüler, otomatik maç döngüsü ve Pirate Shop Access takip programı. Maç bittiğinde veya elenildiğinde otomatik olarak **Play Again** (veya lobiye düşerse **Play**) butonuna tıklar, AFK kalmamak için karakteri hareket ettirir ve bulunan Pirate Shop Access sayısını canlı olarak ekranda gösterir.
+
+## Proje Yapısı
+
+```
+piratecoinmacro/
+├── assets/
+│   ├── templates/            Buton ve bildirim şablon görselleri
+│   └── icons/                Uygulama simgesi ve logo dosyaları
+├── core/
+│   ├── config.py             Yapılandırma, koordinat ve zamanlama ayarları
+│   ├── vision.py             Ekran yakalama, hızlı ROI ve şablon tarama
+│   ├── input_handler.py      Doğrudan giriş simülasyonu ve Fortnite pencere odağı
+│   ├── state.py              Makro durum takibi ve canlı olay yayını
+│   └── snip.py               Etkileşimli ekran kırpma aracı
+├── web/
+│   ├── index.html            Modern kontrol paneli arayüzü
+│   ├── style.css             Fortnite temalı özel stil dosyası
+│   └── app.js                Ön yüz olayları ve gerçek zamanlı sayaçlar
+├── main.py                   Ana uygulama ve Eel motoru başlatıcısı
+├── engine.py                 Geriye dönük uyumluluk köprüsü
+├── Start.bat                 Tek tıkla başlatma betiği
+├── Install_Requirements.bat  Gerekli kütüphaneleri yükleme betiği
+└── Build_EXE.bat             Tek parça taşınabilir EXE derleme betiği
+```
 
 ## Özellikler
 
@@ -29,4 +53,3 @@ Fortnite Pirate Pass ve ada maçları için geliştirilmiş otomatik maç döng�
 - **Görüntü Modu:** Fortnite'ı **Pencereli Tam Ekran (Windowed Fullscreen)** modunda oynamanız görüntü algılamanın en kararlı şekilde çalışmasını sağlar.
 - **Buton Algılanmazsa:** Çözünürlüğünüz veya oyun içi ölçeğiniz farklıysa arayüzdeki **Snip Button** butonuna basın ve ekrandaki Play Again butonunun etrafını seçip bırakın; program yeni görseli anında hafızaya alacaktır.
 - **Tek Parça EXE Yapma:** Python kurulu olmayan bir cihaza taşımak veya tek dosya haline getirmek isterseniz `Build_EXE.bat` dosyasını çalıştırabilirsiniz.
-
