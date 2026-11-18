@@ -122,6 +122,9 @@ function appendLogEntry(entry) {
   row.appendChild(msgSpan);
 
   logContainer.appendChild(row);
+  while (logContainer.children.length > 200) {
+    logContainer.removeChild(logContainer.firstChild);
+  }
   logContainer.scrollTop = logContainer.scrollHeight;
 }
 

@@ -3,7 +3,6 @@ import sys
 import time
 import socket
 import threading
-import cv2
 import keyboard
 import eel
 import eel.browsers
@@ -14,29 +13,37 @@ from core.vision import capture_screen, match_template, load_all_templates
 from core.snip import SnipTool
 from core.worker import worker_loop, w_space_worker
 
+_last_hotkey_time = 0.0
+
 @eel.expose
 def start_macro():
-    if state.running:
-        return {"status": "already_running"}
-    state.running = True
-    state.stop_event.clear()
-    if state.start_time is None:
-        state.start_time = time.time()
-    state.worker_thread = threading.Thread(target=worker_loop, daemon=True)
-    state.worker_thread.start()
-    state.w_space_thread = threading.Thread(target=w_space_worker, daemon=True)
-    state.w_space_thread.start()
-    broadcast_state()
+    with state.lock:
+        if state.running:
+            return {"status": "already_running"}
+        for t in (state.worker_thread, state.w_space_thread):
+            if t is not None and t.is_alive():
+                state.stop_event.set()
+                t.join(timeout=2.0)
+        state.running = True
+        state.stop_event.clear()
+        if state.start_time is None:
+            state.start_time = time.time()
+        state.worker_thread = threading.Thread(target=worker_loop, daemon=True)
+        state.worker_thread.start()
+        state.w_space_thread = threading.Thread(target=w_space_worker, daemon=True)
+        state.w_space_thread.start()
+    broadcast_state(force=True)
     return {"status": "started"}
 
 @eel.expose
 def stop_macro():
-    if not state.running:
-        return {"status": "not_running"}
-    state.running = False
-    state.stop_event.set()
-    state.status = "IDLE"
-    broadcast_state()
+    with state.lock:
+        if not state.running:
+            return {"status": "not_running"}
+        state.running = False
+        state.stop_event.set()
+        state.status = "IDLE"
+    broadcast_state(force=True)
     return {"status": "stopped"}
 
 @eel.expose
@@ -53,6 +60,8 @@ def get_initial_data():
     match_dur = 0
     if state.running and state.match_start_time:
         match_dur = int(time.time() - state.match_start_time)
+    with state.lock:
+        logs_copy = list(state.logs)
     return {
         "running": state.running,
         "status": state.status,
@@ -64,7 +73,7 @@ def get_initial_data():
         "confidence": state.confidence,
         "anti_afk": state.anti_afk,
         "w_space": state.w_space,
-        "logs": state.logs
+        "logs": logs_copy
     }
 
 @eel.expose
@@ -83,11 +92,10 @@ def update_settings(interval, conf, afk, w_space=False):
 @eel.expose
 def test_screen_detection():
     templates = load_all_templates()
-    frame, ox, oy, fw, fh = capture_screen(1)
-    if frame is None:
+    gf, ox, oy, fw, fh = capture_screen(1, as_gray=True)
+    if gf is None:
         add_log("Test match scan: Screen capture unavailable", "warn")
         return {"status": "error", "details": []}
-    gf = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame
     results = []
     for grp, list_tpl in templates.items():
         for name, tpl in list_tpl:
@@ -113,7 +121,8 @@ def trigger_snip():
 
 @eel.expose
 def clear_logs():
-    state.logs.clear()
+    with state.lock:
+        state.logs.clear()
     return {"status": "ok"}
 
 @eel.expose
@@ -123,12 +132,17 @@ def reset_counters():
     state.start_time = time.time() if state.running else None
     state.match_start_time = time.time() if state.running else None
     add_log("Session statistics reset.", "info")
-    broadcast_state()
+    broadcast_state(force=True)
     return {"status": "ok"}
 
 def setup_hotkeys():
     def on_hotkey():
-        toggle_macro()
+        global _last_hotkey_time
+        now = time.time()
+        if now - _last_hotkey_time < 0.35:
+            return
+        _last_hotkey_time = now
+        threading.Thread(target=toggle_macro, daemon=True).start()
     try:
         keyboard.add_hotkey(HOTKEY, on_hotkey)
     except Exception:
@@ -175,12 +189,20 @@ def run_app():
     eel.init(web_dir)
     browser = find_browser()
     port = get_free_port()
+    cmdline_args = ["--disable-http-cache"]
+    if browser in ("edge", "chrome"):
+        cmdline_args.extend([
+            "--disable-background-timer-throttling",
+            "--disable-renderer-backgrounding",
+            "--disable-backgrounding-occluded-windows"
+        ])
     try:
         eel.start(
             "index.html",
             mode=browser,
             host="127.0.0.1",
             port=port,
+            cmdline_args=cmdline_args,
             size=(980, 720)
         )
     except (SystemExit, MemoryError, KeyboardInterrupt):

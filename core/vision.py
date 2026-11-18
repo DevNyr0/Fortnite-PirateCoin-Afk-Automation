@@ -1,8 +1,29 @@
 import os
+import threading
 import cv2
 import mss
 import numpy as np
 from core.config import get_templates_dir
+
+_thread_local = threading.local()
+_scaled_template_cache = {}
+_CACHE_MAX_SIZE = 512
+
+def _get_sct():
+    sct = getattr(_thread_local, "sct", None)
+    if sct is None:
+        sct = mss.mss()
+        _thread_local.sct = sct
+    return sct
+
+def _reset_sct():
+    sct = getattr(_thread_local, "sct", None)
+    if sct is not None:
+        try:
+            sct.close()
+        except Exception:
+            pass
+        _thread_local.sct = None
 
 def load_cv_image(path):
     if not os.path.exists(path):
@@ -14,23 +35,39 @@ def load_cv_image(path):
     except Exception:
         return None
 
-def capture_screen(monitor_index=1):
+def capture_screen(monitor_index=1, as_gray=False):
     try:
-        with mss.mss() as sct:
-            idx = min(monitor_index, len(sct.monitors) - 1)
-            mon = sct.monitors[idx]
-            raw = np.array(sct.grab(mon))
-            bgr = cv2.cvtColor(raw, cv2.COLOR_BGRA2BGR)
-            return bgr, mon["left"], mon["top"], mon["width"], mon["height"]
+        sct = _get_sct()
+        idx = min(monitor_index, len(sct.monitors) - 1)
+        mon = sct.monitors[idx]
+        sct_img = sct.grab(mon)
+        raw = np.asarray(sct_img)
+        code = cv2.COLOR_BGRA2GRAY if as_gray else cv2.COLOR_BGRA2BGR
+        out = cv2.cvtColor(raw, code)
+        return out, mon["left"], mon["top"], mon["width"], mon["height"]
     except Exception:
+        _reset_sct()
         try:
             from PIL import ImageGrab
-            shot = ImageGrab.grab()
-            raw = np.array(shot)
-            bgr = cv2.cvtColor(raw, cv2.COLOR_RGB2BGR)
-            return bgr, 0, 0, bgr.shape[1], bgr.shape[0]
+            with ImageGrab.grab() as shot:
+                raw = np.asarray(shot)
+                code = cv2.COLOR_RGB2GRAY if as_gray else cv2.COLOR_RGB2BGR
+                out = cv2.cvtColor(raw, code)
+                return out, 0, 0, out.shape[1], out.shape[0]
         except Exception:
             return None, 0, 0, 1920, 1080
+
+def _get_scaled_template(gt, tw, th, sc):
+    key = (id(gt), gt.shape[0], gt.shape[1], sc)
+    cached = _scaled_template_cache.get(key)
+    if cached is not None:
+        return cached
+    if len(_scaled_template_cache) >= _CACHE_MAX_SIZE:
+        _scaled_template_cache.clear()
+    interp = cv2.INTER_AREA if sc < 1.0 else cv2.INTER_LINEAR
+    resized = cv2.resize(gt, (tw, th), interpolation=interp)
+    _scaled_template_cache[key] = resized
+    return resized
 
 def match_template(frame, template, threshold=0.78, roi=None, fw=None):
     if frame is None or template is None:
@@ -65,8 +102,7 @@ def match_template(frame, template, threshold=0.78, roi=None, fw=None):
         tw = int(gt.shape[1] * sc)
         if th < 6 or tw < 6 or th >= gf.shape[0] or tw >= gf.shape[1]:
             continue
-        interp = cv2.INTER_AREA if sc < 1.0 else cv2.INTER_LINEAR
-        resized = cv2.resize(gt, (tw, th), interpolation=interp)
+        resized = _get_scaled_template(gt, tw, th, sc)
         res = cv2.matchTemplate(gf, resized, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(res)
         if max_val > best_score:
