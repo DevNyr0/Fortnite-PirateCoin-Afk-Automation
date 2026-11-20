@@ -146,7 +146,7 @@ function js_add_log(entry) {
 }
 
 toggleBtn.addEventListener("click", () => {
-  eel.toggle_macro()();
+  eel.toggle_macro()().catch(() => {});
 });
 
 snipBtn.addEventListener("click", () => {
@@ -201,6 +201,14 @@ if (!tickerTimer) {
     }
   }, 1000);
 }
+
+setInterval(() => {
+  if (window.eel && eel.ping) {
+    try {
+      eel.ping()().catch(() => {});
+    } catch (_) {}
+  }
+}, 15000);
 
 window.addEventListener("DOMContentLoaded", () => {
   if (window.eel) {

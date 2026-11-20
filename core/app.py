@@ -3,12 +3,13 @@ import sys
 import time
 import socket
 import threading
+import traceback
 import keyboard
 import eel
 import eel.browsers
 
 from core.config import HOTKEY, get_base_dir
-from core.state import state, add_log, broadcast_state
+from core.state import state, add_log, broadcast_state, ui_pump, write_file_log
 from core.vision import capture_screen, match_template, load_all_templates
 from core.snip import SnipTool
 from core.worker import worker_loop, w_space_worker
@@ -16,41 +17,57 @@ from core.worker import worker_loop, w_space_worker
 _last_hotkey_time = 0.0
 
 @eel.expose
+def ping():
+    return "ok"
+
+@eel.expose
 def start_macro():
-    with state.lock:
-        if state.running:
-            return {"status": "already_running"}
-        for t in (state.worker_thread, state.w_space_thread):
-            if t is not None and t.is_alive():
-                state.stop_event.set()
-                t.join(timeout=2.0)
-        state.running = True
-        state.stop_event.clear()
-        if state.start_time is None:
-            state.start_time = time.time()
-        state.worker_thread = threading.Thread(target=worker_loop, daemon=True)
-        state.worker_thread.start()
-        state.w_space_thread = threading.Thread(target=w_space_worker, daemon=True)
-        state.w_space_thread.start()
-    broadcast_state(force=True)
-    return {"status": "started"}
+    try:
+        with state.lock:
+            if state.running:
+                return {"status": "already_running"}
+            for t in (state.worker_thread, state.w_space_thread):
+                if t is not None and t.is_alive():
+                    state.stop_event.set()
+                    t.join(timeout=2.0)
+            state.running = True
+            state.stop_event.clear()
+            if state.start_time is None:
+                state.start_time = time.time()
+            state.worker_thread = threading.Thread(target=worker_loop, daemon=True)
+            state.worker_thread.start()
+            state.w_space_thread = threading.Thread(target=w_space_worker, daemon=True)
+            state.w_space_thread.start()
+        broadcast_state(force=True)
+        return {"status": "started"}
+    except Exception as e:
+        write_file_log(f"start_macro error: {e}")
+        return {"status": "error", "message": str(e)}
 
 @eel.expose
 def stop_macro():
-    with state.lock:
-        if not state.running:
-            return {"status": "not_running"}
-        state.running = False
-        state.stop_event.set()
-        state.status = "IDLE"
-    broadcast_state(force=True)
-    return {"status": "stopped"}
+    try:
+        with state.lock:
+            if not state.running:
+                return {"status": "not_running"}
+            state.running = False
+            state.stop_event.set()
+            state.status = "IDLE"
+        broadcast_state(force=True)
+        return {"status": "stopped"}
+    except Exception as e:
+        write_file_log(f"stop_macro error: {e}")
+        return {"status": "error", "message": str(e)}
 
 @eel.expose
 def toggle_macro():
-    if state.running:
-        return stop_macro()
-    return start_macro()
+    try:
+        if state.running:
+            return stop_macro()
+        return start_macro()
+    except Exception as e:
+        write_file_log(f"toggle_macro error: {e}")
+        return {"status": "error", "message": str(e)}
 
 @eel.expose
 def get_initial_data():
@@ -183,10 +200,31 @@ def find_browser():
             return "chrome"
     return "default"
 
+def _install_crash_hooks():
+    def _sys_hook(exc_type, exc_value, exc_tb):
+        if issubclass(exc_type, (KeyboardInterrupt, SystemExit)):
+            return
+        write_file_log("UNHANDLED SYS EXCEPTION:\n" + "".join(traceback.format_exception(exc_type, exc_value, exc_tb)))
+
+    def _thread_hook(args):
+        write_file_log(
+            f"UNHANDLED THREAD EXCEPTION ({args.thread.name}):\n"
+            + "".join(traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback))
+        )
+
+    sys.excepthook = _sys_hook
+    threading.excepthook = _thread_hook
+
+def _on_ws_close(page, remaining_sockets):
+    write_file_log(f"WebSocket closed on '{page}' (remaining={len(remaining_sockets)}, running={state.running})")
+
 def run_app():
+    _install_crash_hooks()
+    write_file_log("Application started.")
     setup_hotkeys()
     web_dir = os.path.join(get_base_dir(), "web")
     eel.init(web_dir)
+    eel.spawn(ui_pump)
     browser = find_browser()
     port = get_free_port()
     cmdline_args = ["--disable-http-cache"]
@@ -203,17 +241,31 @@ def run_app():
             host="127.0.0.1",
             port=port,
             cmdline_args=cmdline_args,
+            shutdown_delay=5.0,
+            close_callback=_on_ws_close,
             size=(980, 720)
         )
-    except (SystemExit, MemoryError, KeyboardInterrupt):
+    except (SystemExit, MemoryError, KeyboardInterrupt) as e:
+        write_file_log(f"App exited via {type(e).__name__}: {e} (running={state.running})")
         state.stop_event.set()
         return 0
-    except Exception:
+    except Exception as e:
+        write_file_log(f"Primary eel.start failed: {e}\n{traceback.format_exc()}")
         try:
             port = get_free_port()
-            eel.start("index.html", mode="default", host="127.0.0.1", port=port, size=(980, 720))
-        except Exception:
+            eel.start(
+                "index.html",
+                mode="default",
+                host="127.0.0.1",
+                port=port,
+                shutdown_delay=5.0,
+                close_callback=_on_ws_close,
+                size=(980, 720)
+            )
+        except Exception as e2:
+            write_file_log(f"Fallback eel.start failed: {e2}\n{traceback.format_exc()}")
             state.stop_event.set()
             return 1
+    write_file_log("App exited normally.")
     return 0
 
